@@ -32,3 +32,30 @@ app.get("/", (req, res) => {
 });
 
 app.listen(3000, () => console.log("Server running"));
+// Middleware pour parser le JSON envoyé par Telegram
+app.use(bodyParser.json());
+
+// Endpoint webhook Telegram
+app.post("/webhook", async (req, res) => {
+  const message = req.body.message;
+  if (!message || !message.text) return res.sendStatus(200);
+
+  const chatId = message.chat.id;
+  const text = message.text;
+
+  let reply = "";
+  if (text === "/start") reply = "Bot actif ✅";
+  else if (text === "/help") reply = "Commandes disponibles : /start, /help";
+  else reply = "Commande inconnue ❌";
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      chat_id: chatId,
+      text: reply
+    });
+  } catch (error) {
+    console.error("Erreur en envoyant le message :", error.response?.data || error.message);
+  }
+
+  res.sendStatus(200); // très important
+});
